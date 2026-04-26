@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#05070d" />
+    <meta
+      name="description"
+      content="Neon Fists: Sewer Clash is an original browser arcade brawler with local co-op, wave stages, weapons, upgrades, and Canvas-rendered game art."
+    />
+    <title>Neon Fists: Sewer Clash</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2305070d'/%3E%3Cpath d='M3 10h10v3H3zM5 3h3v7H5zM9 4h3v6H9z' fill='%2337f5ff'/%3E%3Cpath d='M2 12h12v2H2z' fill='%23ff4fd8'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./style.css?v=2026.04.26-release.1" />
+  </head>
+  <body>
+    <main id="game-shell">
+      <canvas id="game" width="960" height="540" aria-label="Neon Fists game canvas"></canvas>
+      <div id="hud" class="hud"></div>
+      <div id="overlay" class="overlay"></div>
+      <section id="loading-screen" class="loading-screen" aria-live="polite">
+        <div class="loader-panel">
+          <h1>Neon Fists</h1>
+          <div class="loading-bar"><span id="loading-bar-fill"></span></div>
+          <p id="loading-status">Booting arcade core...</p>
+          <small id="build-version">Build 2026.04.26-release.1</small>
+        </div>
+      </section>
+      <button id="fullscreen-button" class="fullscreen-button" type="button" aria-label="Toggle fullscreen">Fullscreen</button>
+      <section id="touch-controls" class="touch-controls" aria-label="Touch controls">
+        <div class="touch-pad" aria-label="Movement pad">
+          <button data-touch-player="p1" data-touch-axis="-1,0" aria-label="Move left">L</button>
+          <button data-touch-player="p1" data-touch-axis="0,-1" aria-label="Move up">U</button>
+          <button data-touch-player="p1" data-touch-axis="0,1" aria-label="Move down">D</button>
+          <button data-touch-player="p1" data-touch-axis="1,0" aria-label="Move right">R</button>
+        </div>
+        <div class="touch-actions" aria-label="Action buttons">
+          <button data-touch-player="p1" data-touch-action="punch">Punch</button>
+          <button data-touch-player="p1" data-touch-action="kick">Kick</button>
+          <button data-touch-player="p1" data-touch-action="jump">Jump</button>
+          <button data-touch-player="p1" data-touch-action="block">Block</button>
+          <button data-touch-player="p1" data-touch-action="special">Special</button>
+          <button data-touch-player="p1" data-touch-action="dash">Dash</button>
+          <button data-touch-player="p1" data-touch-action="pickup">Use</button>
+          <button data-touch-player="system" data-touch-action="pause">Pause</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./src/main.js?v=2026.04.26-release.1"></script>
+  </body>
+</html>
