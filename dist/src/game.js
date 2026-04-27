@@ -11,6 +11,36 @@ import { UI } from "./ui.js";
 import { WaveManager } from "./waves.js";
 import { WEAPONS, WEAPON_IDS } from "./weapons.js";
 
+const TUTORIAL_STEPS = [
+  {
+    id: "move",
+    title: "Move",
+    text: "WASD, arrow keys, gamepad, or the left touch D-pad moves on the street plane."
+  },
+  {
+    id: "attack",
+    title: "Punch / Kick",
+    text: "Use J / K or PUNCH / KICK to start a combo. Punch three times for a finisher."
+  },
+  {
+    id: "weapon",
+    title: "Grab Weapon",
+    text: "Walk over the glowing pipe. Press E or PICKUP to swap weapons later."
+  },
+  {
+    id: "special",
+    title: "Use Special",
+    text: "When SUPER READY flashes, press U or SUPER for a crowd-clearing attack."
+  },
+  {
+    id: "revive",
+    title: "Revive Partner",
+    text: "In co-op, stand near a downed partner and hold PICKUP or BLOCK to revive.",
+    coopOnly: true,
+    autoCompleteAfter: 5
+  }
+];
+
 class Input {
   constructor() {
     this.keys = new Set();
@@ -1431,6 +1461,12 @@ export class Game {
     this.transitionWipeTimer = 0;
     this.stageCompleteTimer = 0;
     this.stageClearHandled = false;
+    this.stageElapsed = 0;
+    this.stageRunStats = this.emptyStageRunStats();
+    this.stageSummary = null;
+    this.tutorial = { active: false };
+    this.superReadyTimer = 0;
+    this.miniBossTeaseTimer = 0;
     this.pendingUpgrades = [];
     this.upgradePlayerIndex = 0;
     this.difficulty = this.progression.save.options.difficulty || "normal";
@@ -1484,6 +1520,7 @@ export class Game {
     if (action.startsWith("touchOpacity:")) this.setMobileControlOpacity(Number(action.split(":")[1]));
     if (action.startsWith("unlock:")) this.buyUnlock(action.split(":")[1]);
     if (action === "resetSave") this.resetSaveWithConfirmation();
+    if (action === "skipTutorial") this.skipTutorial();
     if (action === "resume") this.mode = "play";
     if (action === "restartStage") this.restartStage();
     if (action === "musicDown") this.setMusicVolume(this.audio.musicVolume - 0.1);
@@ -1492,6 +1529,105 @@ export class Game {
     if (action === "sfxUp") this.setSfxVolume(this.audio.sfxVolume + 0.1);
     if (action === "toggleMute") this.setMuted(!this.audio.muted);
     this.ui.render();
+  }
+
+  emptyStageRunStats() {
+    return {
+      enemiesDefeated: 0,
+      pickupsCollected: 0,
+      scrapEarned: 0,
+      revives: 0,
+      startTime: this.time || 0
+    };
+  }
+
+  createTutorialState() {
+    const status = this.progression.save.tutorial || {};
+    const steps = TUTORIAL_STEPS.filter((step) => !step.coopOnly || this.playerCount > 1);
+    return {
+      active: this.stageIndex === 0 && !status.completed && !status.skipped,
+      steps,
+      index: 0,
+      stepAge: 0,
+      completed: new Set()
+    };
+  }
+
+  currentTutorialStep() {
+    if (!this.tutorial?.active) return null;
+    return this.tutorial.steps[this.tutorial.index] || null;
+  }
+
+  skipTutorial() {
+    this.tutorial = { active: false };
+    this.progression.setTutorialStatus({ completed: true, skipped: true });
+    this.addPopup("TUTORIAL SKIPPED", this.level.cameraX + 260, this.level.bounds.top - 44, "#ffd15c", 0.35, 0.75);
+  }
+
+  completeTutorial() {
+    this.tutorial = { active: false };
+    this.progression.setTutorialStatus({ completed: true, skipped: false });
+    this.addPopup("READY TO BRAWL", this.level.cameraX + 260, this.level.bounds.top - 44, "#37f5ff", 0.48, 0.9);
+  }
+
+  advanceTutorial(id) {
+    if (!this.tutorial?.active) return;
+    const step = this.currentTutorialStep();
+    if (!step || step.id !== id) return;
+    this.tutorial.completed.add(id);
+    this.tutorial.index++;
+    this.tutorial.stepAge = 0;
+    if (this.tutorial.index >= this.tutorial.steps.length) {
+      this.completeTutorial();
+      return;
+    }
+    const next = this.currentTutorialStep();
+    if (next) this.addPopup(next.title.toUpperCase(), this.level.cameraX + 290, this.level.bounds.top - 42, "#ffd15c", 0.35, 0.7);
+  }
+
+  updateTutorial(dt) {
+    if (!this.tutorial?.active || this.mode !== "play") return;
+    const step = this.currentTutorialStep();
+    if (!step) {
+      this.completeTutorial();
+      return;
+    }
+    this.tutorial.stepAge += dt;
+    const moved = Math.hypot(this.input.axes.p1.x, this.input.axes.p1.y) > 0.25
+      || Math.hypot(this.input.axes.p2.x, this.input.axes.p2.y) > 0.25;
+    const attacked = this.players.some((player) => player.combo > 0 || ["punch1", "punch2", "punch3", "kick", "weaponLight", "weaponHeavy"].includes(player.attackKind));
+    const armed = this.players.some((player) => Boolean(player.weapon));
+    const usedSpecial = this.players.some((player) => ["special", "powerFinish", "voltRush", "groundSlam", "coopSuper", "weaponSpecial"].includes(player.attackKind));
+    const revived = this.stageRunStats.revives > 0;
+    if (step.id === "move" && moved) this.advanceTutorial("move");
+    if (step.id === "attack" && attacked) this.advanceTutorial("attack");
+    if (step.id === "weapon" && armed) this.advanceTutorial("weapon");
+    if (step.id === "special" && usedSpecial) this.advanceTutorial("special");
+    if (step.id === "revive" && (revived || this.tutorial.stepAge >= (step.autoCompleteAfter || 5))) this.advanceTutorial("revive");
+  }
+
+  updateSuperReadyCues(dt) {
+    this.superReadyTimer = Math.max(0, this.superReadyTimer - dt);
+    if (this.stageElapsed < 2.2) return;
+    for (const player of this.activePlayers()) {
+      const ready = player.specialCooldown <= 0;
+      if (ready && !player.specialReadyCueShown) {
+        player.specialReadyCueShown = true;
+        this.superReadyTimer = 1.8;
+        this.audio.sfx("phase");
+        this.addPopup("SUPER READY", player.x, player.y - 104, "#ffd15c", 0.7, 1);
+        this.particles.burst(player.x, player.y - 48, player.fighter.colors.trim, 22, 190, "ring");
+        break;
+      }
+      if (!ready) player.specialReadyCueShown = false;
+    }
+  }
+
+  showMiniBossTease() {
+    if (this.stageIndex !== 0) return;
+    this.miniBossTeaseTimer = 3.2;
+    this.audio.sfx("boss");
+    this.addPopup("MINI-BOSS SIGNAL", this.level.cameraX + 560, 160, "#ff4055", 0.58, 1.15);
   }
 
   newRun(stageIndex = 0) {
@@ -1522,6 +1658,12 @@ export class Game {
     this.transitionWipeTimer = 0.9;
     this.stageCompleteTimer = 0;
     this.stageClearHandled = false;
+    this.stageElapsed = 0;
+    this.stageRunStats = this.emptyStageRunStats();
+    this.stageSummary = null;
+    this.tutorial = this.createTutorialState();
+    this.superReadyTimer = 0;
+    this.miniBossTeaseTimer = 0;
     this.pendingUpgrades = [];
     this.upgradePlayerIndex = 0;
     this.mode = "play";
@@ -1555,6 +1697,12 @@ export class Game {
     this.freezeFrames = 0;
     this.screenFlash = 0;
     this.stageClearHandled = false;
+    this.stageElapsed = 0;
+    this.stageRunStats = this.emptyStageRunStats();
+    this.stageSummary = null;
+    this.tutorial = this.createTutorialState();
+    this.superReadyTimer = 0;
+    this.miniBossTeaseTimer = 0;
     this.mode = "play";
   }
 
@@ -1563,6 +1711,7 @@ export class Game {
     player.playerIndex = index;
     player.playerLabel = `P${index + 1}`;
     player.inputId = index === 0 ? "p1" : "p2";
+    player.specialReadyCueShown = false;
     ensurePlayerUpgrades(player);
     return player;
   }
@@ -1756,10 +1905,12 @@ export class Game {
 
   update(dt) {
     this.time += dt;
+    this.stageElapsed += dt;
     this.shake = Math.max(0, this.shake - dt);
     this.screenFlash = Math.max(0, this.screenFlash - dt * 2.2);
     this.stageTitleTimer = Math.max(0, this.stageTitleTimer - dt);
     this.bossWarningTimer = Math.max(0, this.bossWarningTimer - dt);
+    this.miniBossTeaseTimer = Math.max(0, this.miniBossTeaseTimer - dt);
     this.transitionWipeTimer = Math.max(0, this.transitionWipeTimer - dt);
     this.stageCompleteTimer = Math.max(0, this.stageCompleteTimer - dt);
     this.audio.update(dt, this.stageIndex);
@@ -1786,6 +1937,8 @@ export class Game {
     this.resolveCombat();
     this.resolveObjects();
     this.resolvePickups();
+    this.updateTutorial(dt);
+    this.updateSuperReadyCues(dt);
     this.enemies = this.enemies.filter((e) => e.deathTimer < 1.5);
     this.particles.update(dt);
     this.level.objects.forEach((o) => (o.hitFlash = Math.max(0, o.hitFlash - dt)));
@@ -1804,6 +1957,7 @@ export class Game {
         if (Math.floor(this.time * 8) % 5 === 0) this.particles.burst(downed.x, downed.y - 46, "#37f5ff", 2, 70, "ring");
         if (downed.reviveProgress >= 1.2) {
           downed.revive(downed.x, downed.y, 0.48);
+          this.stageRunStats.revives++;
           this.audio.sfx("pickup");
           this.addPopup("REVIVED", downed.x, downed.y - 86, "#37f5ff", 0.55, 0.9);
           this.particles.burst(downed.x, downed.y - 42, "#37f5ff", 20, 190, "star");
@@ -2081,6 +2235,7 @@ export class Game {
             if (e.health <= 0) {
               player.score += e.data.score;
               this.progression.recordEnemyDefeated(1);
+              this.stageRunStats.enemiesDefeated++;
               this.awardScrap(Math.max(4, Math.ceil(e.data.score * 0.08)), "enemy");
               this.audio.sfx("ko");
               if (Math.random() < (e.maxHealth > 120 ? 0.65 : 0.28)) this.spawnPickup(e.x, e.y, "weapon", this.randomWeaponId(), 8.5);
@@ -2250,6 +2405,7 @@ export class Game {
             this.spawnPickup(player.x - player.facing * 34, player.y, "weapon", old.id, 7.5, { ownerId: player.playerLabel, pickupCooldown: 0.55 });
           }
           pickup.taken = true;
+          this.stageRunStats.pickupsCollected++;
           player.equipWeapon(pickup.weapon || "pipe");
           const weapon = WEAPONS[player.weapon.id] || WEAPONS.pipe;
           this.audio.sfx("weaponPickup");
@@ -2259,6 +2415,7 @@ export class Game {
           break;
         }
         pickup.taken = true;
+        this.stageRunStats.pickupsCollected++;
         if (pickup.type === "health") player.health = Math.min(player.maxHealth, player.health + 32);
         if (pickup.type === "gem") {
           player.score += 250;
@@ -2302,6 +2459,7 @@ export class Game {
   awardScrap(amount, source = "score") {
     const result = this.progression.addScrap(amount, source);
     const gained = result?.gained ?? result ?? 0;
+    if (this.stageRunStats) this.stageRunStats.scrapEarned += gained;
     if (gained > 0 && (source === "wave" || source === "stage" || source === "boss")) {
       this.addPopup(`+${gained} SCRAP`, this.level.cameraX + 220, this.level.bounds.top - 46, "#ffd15c", 0.38, 0.85);
     }
@@ -2317,6 +2475,13 @@ export class Game {
     const combo = bestCombo(this.players);
     const clearScrap = 85 + this.stageIndex * 30 + Math.floor(score / 1200);
     this.awardScrap(clearScrap, this.stageIndex === LEVELS.length - 1 ? "boss" : "stage");
+    this.stageSummary = {
+      stageName: this.level.name,
+      enemiesDefeated: this.stageRunStats.enemiesDefeated,
+      comboMax: combo,
+      scrapEarned: this.stageRunStats.scrapEarned,
+      pickupsCollected: this.stageRunStats.pickupsCollected
+    };
     this.progression.recordStage(this.stageIndex, score, combo, true);
     this.monetization.analytics.track("stage_cleared", { stage: this.stageIndex + 1, score, combo });
     this.screenFlash = Math.max(this.screenFlash, 0.22);
@@ -2379,6 +2544,12 @@ export class Game {
     this.syncPrimaryPlayer();
     this.enemies = [];
     this.popups = [];
+    this.stageElapsed = 0;
+    this.stageRunStats = this.emptyStageRunStats();
+    this.stageSummary = null;
+    this.tutorial = this.createTutorialState();
+    this.superReadyTimer = 0;
+    this.miniBossTeaseTimer = 0;
     this.pendingUpgrades = [];
     this.stageTitleTimer = 2.4;
     this.transitionWipeTimer = 0.9;

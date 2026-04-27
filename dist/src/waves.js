@@ -8,6 +8,7 @@ export class WaveManager {
     this.pendingGroups = [];
     this.completed = false;
     this.clearTimer = 0;
+    this.miniBossTeased = false;
   }
 
   currentLabel() {
@@ -53,6 +54,11 @@ export class WaveManager {
     if (wave.boss || wave.miniBoss) {
       game.audio.sfx(wave.boss ? "boss" : "phase");
       game.bossWarningTimer = wave.boss ? 2.2 : 1.2;
+    }
+    const nextWave = this.level.waves[this.index + 1];
+    if (!this.miniBossTeased && nextWave?.miniBoss) {
+      this.miniBossTeased = true;
+      game.showMiniBossTease?.();
     }
   }
 

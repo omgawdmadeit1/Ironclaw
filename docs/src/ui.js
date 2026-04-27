@@ -61,7 +61,38 @@ export class UI {
         ${boss ? `<div class="hud-card boss-card"><strong>${boss.data.name}</strong><div class="bar"><span style="width:${Math.max(0, (boss.health / boss.maxHealth) * 100)}%"></span></div><div>Phase ${boss.phase}</div></div>` : ""}
       </div>
       ${this.game.stageTitleTimer > 0 ? `<div class="stage-card">Stage ${this.game.stageIndex + 1}<br><strong>${this.game.level.name}</strong></div>` : ""}
-      ${this.game.bossWarningTimer > 0 ? `<div class="boss-warning"><img src="${spritePortraitUrl("boss", "phase2", "phase2")}" alt="" />Boss Warning</div>` : ""}`;
+      ${this.game.bossWarningTimer > 0 ? `<div class="boss-warning"><img src="${spritePortraitUrl("boss", "phase2", "phase2")}" alt="" />Boss Warning</div>` : ""}
+      ${this.game.miniBossTeaseTimer > 0 ? `<div class="mini-boss-tease">Mini-Boss Signal Incoming</div>` : ""}
+      ${this.game.superReadyTimer > 0 ? `<div class="super-ready-cue">SUPER READY<br><span>Press U / SUPER</span></div>` : ""}
+      ${this.tutorialPrompt()}`;
+    this.bindHudButtons();
+  }
+
+  tutorialPrompt() {
+    const step = this.game.currentTutorialStep?.();
+    if (!step) return "";
+    const total = this.game.tutorial?.steps?.length || 1;
+    const index = Math.min(total, (this.game.tutorial?.index || 0) + 1);
+    return `
+      <div class="tutorial-card">
+        <div class="tutorial-kicker">Quick Start ${index}/${total}</div>
+        <strong>${step.title}</strong>
+        <p>${step.text}</p>
+        <button data-action="skipTutorial">Skip Tutorial</button>
+      </div>`;
+  }
+
+  stageSummaryCard() {
+    const summary = this.game.stageSummary;
+    if (!summary) return "";
+    return `
+      <div class="stage-summary">
+        <strong>${summary.stageName} Rewards</strong>
+        <span>Enemies ${formatNumber(summary.enemiesDefeated)}</span>
+        <span>Max Combo ${formatNumber(summary.comboMax)}</span>
+        <span>Scrap +${formatNumber(summary.scrapEarned)}</span>
+        <span>Pickups ${formatNumber(summary.pickupsCollected)}</span>
+      </div>`;
   }
 
   renderOverlay() {
@@ -83,6 +114,7 @@ export class UI {
       save?.options?.mobileControlOpacity,
       save?.scrap,
       save?.unlockedStages,
+      this.game.stageSummary ? `${this.game.stageSummary.enemiesDefeated}-${this.game.stageSummary.comboMax}-${this.game.stageSummary.scrapEarned}-${this.game.stageSummary.pickupsCollected}` : "",
       Object.entries(save?.unlocks || {}).map(([id, value]) => `${id}-${value}`).join("|"),
       this.game.pendingStageIndex,
       this.game.upgradePlayerIndex,
@@ -261,6 +293,7 @@ export class UI {
         <section class="menu wide-menu upgrade-menu">
           <h1 class="title">Stage Complete</h1>
           <p class="subtitle">${player?.playerLabel || "P1"} choose one upgrade before the next stage.</p>
+          ${this.stageSummaryCard()}
           <div class="upgrade-grid">
             ${this.game.pendingUpgrades.map((card, index) => `
               <button class="upgrade-card" data-action="upgrade:${index}">
@@ -286,6 +319,7 @@ export class UI {
       <section class="menu">
         <h1 class="title">${copy[0]}</h1>
         <p class="subtitle">${copy[1]}</p>
+        ${this.stageSummaryCard()}
         <div class="button-row">
           <button data-action="${copy[3]}">${copy[2]}</button>
           <button data-action="start">Title</button>
@@ -533,6 +567,12 @@ export class UI {
         const output = input.closest(".touch-opacity-row")?.querySelector("[data-touch-opacity-value]");
         if (output) output.textContent = `${pct}%`;
       });
+    });
+  }
+
+  bindHudButtons() {
+    this.hud.querySelectorAll("button[data-action]").forEach((button) => {
+      button.addEventListener("click", () => this.game.menuAction(button.dataset.action));
     });
   }
 }

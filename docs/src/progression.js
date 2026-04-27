@@ -47,6 +47,10 @@ const DEFAULT_SAVE = {
     clearsByStage: {},
     lastDaily: "",
     dailySeed: ""
+  },
+  tutorial: {
+    completed: false,
+    skipped: false
   }
 };
 
@@ -72,7 +76,8 @@ export class Progression {
       ...data,
       options: { ...DEFAULT_SAVE.options, ...(data.options || {}) },
       unlocks: { ...DEFAULT_SAVE.unlocks, ...(data.unlocks || {}) },
-      stats: { ...DEFAULT_SAVE.stats, ...(data.stats || {}) }
+      stats: { ...DEFAULT_SAVE.stats, ...(data.stats || {}) },
+      tutorial: { ...DEFAULT_SAVE.tutorial, ...(data.tutorial || {}) }
     };
   }
 
@@ -97,6 +102,11 @@ export class Progression {
 
   setOption(key, value) {
     this.save.options[key] = value;
+    this.persist();
+  }
+
+  setTutorialStatus(status = {}) {
+    this.save.tutorial = { ...this.save.tutorial, ...status };
     this.persist();
   }
 

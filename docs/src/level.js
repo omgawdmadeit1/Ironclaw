@@ -66,14 +66,14 @@ export const LEVELS = [
       ["explosive", 1870, 486]
     ],
     [
-      wave("alley-1", 250, "Easy Approach", [[["thug", 540, 404], ["thug", 650, 456]]], { reward: "gem" }),
+      wave("alley-1", 95, "First Clash", [[["thug", 430, 404], ["thug", 520, 456]]], { reward: "gem", spawnDelay: 0.25 }),
       wave("alley-2", 620, "Mixed Alley Crew", [[["blade", 770, 372], ["thug", 880, 438], ["grabber", 970, 476]]], { reward: "health" }),
       wave("alley-3", 1040, "Weapon Cache Challenge", [[["shield", 1210, 418], ["thrower", 1340, 372]], { delay: 0.8, enemies: [["blade", 1450, 472]] }], { reward: "weapon:pipe" }),
       wave("alley-4", 1510, "Elite Street Pressure", [[["thug", 1660, 400, "elite"], ["ninja", 1780, 462], ["shield", 1900, 422]]], { reward: "power" }),
       wave("alley-5", 2020, "Alley Mini-Boss", [[["brute", 2130, 426, "elite"], ["medic", 2240, 384]]], { miniBoss: true, reward: "weapon:baton" })
     ],
     [[360, 455, "crate"], [700, 372, "sign"], [1020, 455, "barrel"], [1380, 505, "crate"], [1600, 390, "crate"], [1880, 472, "explosive"]],
-    [[560, 462, "weapon:pipe"], [820, 448, "gem"], [1180, 380, "health"], [1510, 504, "weapon:baton"], [1700, 456, "power"]]
+    [[300, 462, "weapon:pipe"], [820, 448, "gem"], [1180, 380, "health"], [1510, 504, "weapon:baton"], [1700, 456, "power"]]
   ),
   makeStage(
     1,

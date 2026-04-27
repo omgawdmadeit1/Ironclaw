@@ -8,6 +8,7 @@
 - Improved mobile touch controls with larger scalable buttons, bigger hit areas, touch fallback events, and saved size options.
 - Added mobile control size options: Small, Medium, Large, Extra Large.
 - Redesigned mobile controls into an arcade layout with a left D-pad, right diamond action cluster, utility buttons, top-right pause, saved layout options, and opacity control.
+- Polished the first 60 seconds with optional tutorial prompts, skip/tutorial persistence, early Stage 1 pipe pickup, immediate first enemy wave, SUPER READY cue, mini-boss tease, and stage-clear reward summaries.
 
 ## 2026.04.26-release.1
 

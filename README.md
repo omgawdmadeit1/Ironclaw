@@ -37,6 +37,7 @@ Release additions include:
 - reset-save button with browser confirmation
 - privacy-friendly analytics placeholder disabled by default
 - CrazyGames, Poki, itch.io, and GameDistribution SDK adapter placeholders disabled by default
+- first-minute retention polish with optional tutorial prompts, early weapon access, faster first enemy contact, SUPER READY cues, mini-boss tease, and stage-clear reward summaries
 
 ## Controls
 
@@ -49,6 +50,14 @@ Release additions include:
 - Debug overlay: F3
 - Gamepad: pad 1 controls P1, pad 2 controls P2 where supported
 - Mobile touch: left D-pad moves, right diamond uses Jump / Punch / Kick / Super, utility buttons handle Dash / Block / Pickup, and the top-right touch button pauses. Touch options include Small, Medium, Large, Extra Large, Classic, Compact, Arcade, and opacity.
+
+## First-Minute Onboarding
+
+New save files show optional quick-start prompts for movement, punch/kick attacks, weapon pickup, special use, and co-op revive. The tutorial can be skipped from the prompt and completion/skipped state persists in localStorage under `neonFistsSave.v3`.
+
+Stage 1 now opens faster: the first enemy wave starts immediately, an early pipe pickup sits in the opening lane, SUPER READY gets a strong on-screen cue, and the alley mini-boss is teased before the final wave.
+
+Stage clear screens summarize enemies defeated, max combo, Scrap earned, and pickups collected before upgrade choices or victory.
 
 ## Modes And Menus
 
