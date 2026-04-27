@@ -712,6 +712,20 @@ class Renderer {
       ctx.beginPath();
       ctx.ellipse(p.x, p.y + 5, 42, 12, 0, 0, Math.PI * 2);
       ctx.fill();
+      if (p.inRange) {
+        ctx.globalAlpha = 0.28 + pulse * 0.18;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y + 4, 74, 24, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.86;
+        ctx.fillStyle = p.type === "weapon" ? "#ffd15c" : color;
+        ctx.font = "700 18px 'Courier New', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(p.type === "weapon" ? `${p.hintPlayer || ""} USE` : p.type.toUpperCase(), p.x, p.y - 86);
+        ctx.textAlign = "left";
+      }
       ctx.globalAlpha = 0.38 + pulse * 0.28;
       ctx.shadowColor = color;
       ctx.shadowBlur = 22;
@@ -1423,6 +1437,7 @@ export class Game {
     this.audio.setMusicVolume(this.progression.save.options.musicVolume ?? this.audio.musicVolume);
     this.audio.setSfxVolume(this.progression.save.options.sfxVolume ?? this.audio.sfxVolume);
     this.audio.muted = Boolean(this.progression.save.options.muted);
+    this.applyMobileControlSize(this.progression.save.options.mobileControlSize || "large", false);
   }
 
   start() {
@@ -1464,6 +1479,7 @@ export class Game {
     if (action.startsWith("upgrade:")) this.chooseUpgrade(Number(action.split(":")[1]));
     if (action.startsWith("difficulty:")) this.setDifficulty(action.split(":")[1]);
     if (action.startsWith("control:")) this.setControlPreference(action.split(":")[1]);
+    if (action.startsWith("touchSize:")) this.setMobileControlSize(action.split(":")[1]);
     if (action.startsWith("unlock:")) this.buyUnlock(action.split(":")[1]);
     if (action === "resetSave") this.resetSaveWithConfirmation();
     if (action === "resume") this.mode = "play";
@@ -1639,6 +1655,17 @@ export class Game {
     this.progression.setOption("controlDisplay", value || "auto");
   }
 
+  setMobileControlSize(value) {
+    this.applyMobileControlSize(value, true);
+  }
+
+  applyMobileControlSize(value, persist = true) {
+    const allowed = new Set(["small", "medium", "large", "xl"]);
+    const size = allowed.has(value) ? value : "large";
+    globalThis.document?.documentElement?.setAttribute("data-touch-size", size);
+    if (persist) this.progression.setOption("mobileControlSize", size);
+  }
+
   resetSaveWithConfirmation() {
     const confirmed = globalThis.confirm?.("Reset all Neon Fists local save data, including Scrap, unlocks, options, and stage records?");
     if (!confirmed) return;
@@ -1647,6 +1674,7 @@ export class Game {
     this.audio.setMusicVolume(this.progression.save.options.musicVolume ?? 1);
     this.audio.setSfxVolume(this.progression.save.options.sfxVolume ?? 1);
     this.audio.muted = Boolean(this.progression.save.options.muted);
+    this.applyMobileControlSize(this.progression.save.options.mobileControlSize || "large", false);
     this.pendingStageIndex = 0;
     this.playerCount = 2;
     this.mode = "start";
@@ -1858,6 +1886,9 @@ export class Game {
   updatePickups(dt) {
     for (const pickup of this.level.pickups) {
       if (pickup.ttl != null) pickup.ttl -= dt;
+      pickup.pickupCooldown = Math.max(0, (pickup.pickupCooldown || 0) - dt);
+      pickup.inRange = false;
+      pickup.hintPlayer = null;
     }
     this.level.pickups = this.level.pickups.filter((pickup) => !pickup.taken && (pickup.ttl == null || pickup.ttl > 0));
   }
@@ -1962,16 +1993,16 @@ export class Game {
   handleWeaponDropInput() {
     for (const player of this.players) {
       if (!player.weapon || !this.input.pressed("pickup", player.inputId) || player.attackTimer > 0 || player.health <= 0) continue;
-      const nearWeapon = this.level.pickups.some((pickup) => pickup.type === "weapon" && Math.hypot(pickup.x - player.x, pickup.y - player.y) < 78);
-      if (nearWeapon) continue;
+      const nearPickup = this.level.pickups.some((pickup) => !pickup.taken && this.pickupInRange(player, pickup, true));
+      if (nearPickup) continue;
       const dropped = player.dropWeapon();
       if (!dropped) continue;
-      this.spawnPickup(player.x + player.facing * 34, player.y, "weapon", dropped.id, 7.5);
+      this.spawnPickup(player.x + player.facing * 42, player.y, "weapon", dropped.id, 7.5, { ownerId: player.playerLabel, pickupCooldown: 0.55 });
       this.addPopup("DROP", player.x, player.y - 82, "#c7d0dd", 0.3, 0.62);
     }
   }
 
-  spawnPickup(x, y, type, weapon = null, ttl = null) {
+  spawnPickup(x, y, type, weapon = null, ttl = null, options = {}) {
     this.level.pickups.push({
       id: `drop${Math.random().toString(16).slice(2)}`,
       x,
@@ -1980,7 +2011,11 @@ export class Game {
       weapon,
       taken: false,
       bob: Math.random() * 10,
-      ttl
+      ttl,
+      ownerId: options.ownerId || null,
+      pickupCooldown: options.pickupCooldown || 0,
+      inRange: false,
+      hintPlayer: null
     });
   }
 
@@ -2178,16 +2213,21 @@ export class Game {
     for (const pickup of this.level.pickups) {
       if (pickup.taken) continue;
       const candidates = this.activePlayers()
-        .filter((player) => Math.hypot(pickup.x - player.x, pickup.y - player.y) <= 84 + (player.upgrades?.magnet || 0))
-        .sort((a, b) => Math.hypot(pickup.x - a.x, pickup.y - a.y) - Math.hypot(pickup.x - b.x, pickup.y - b.y));
+        .filter((player) => this.pickupInRange(player, pickup))
+        .sort((a, b) => this.pickupDistance(a, pickup) - this.pickupDistance(b, pickup));
+      if (candidates.length) {
+        pickup.inRange = true;
+        pickup.hintPlayer = candidates[0].playerLabel;
+      }
       if (!candidates.length) continue;
       for (const player of candidates) {
         if (pickup.type === "weapon") {
           const wantsSwap = this.input.pressed("pickup", player.inputId);
+          if (pickup.pickupCooldown > 0 && pickup.ownerId === player.playerLabel) continue;
           if (player.weapon && !wantsSwap) continue;
           if (player.weapon && wantsSwap) {
             const old = player.dropWeapon();
-            this.spawnPickup(player.x - player.facing * 24, player.y, "weapon", old.id, 7.5);
+            this.spawnPickup(player.x - player.facing * 34, player.y, "weapon", old.id, 7.5, { ownerId: player.playerLabel, pickupCooldown: 0.55 });
           }
           pickup.taken = true;
           player.equipWeapon(pickup.weapon || "pipe");
@@ -2214,6 +2254,29 @@ export class Game {
         break;
       }
     }
+  }
+
+  pickupRadius(player, pickup, hint = false) {
+    const base = pickup.type === "weapon" ? 138 : 124;
+    const visualPadding = pickup.type === "weapon" ? 24 : 18;
+    const magnet = player.upgrades?.magnet || 0;
+    return base + visualPadding + magnet + (hint ? 18 : 0);
+  }
+
+  pickupDistance(player, pickup) {
+    const dx = pickup.x - player.x;
+    const dy = (pickup.y - player.y) * 0.55;
+    return Math.hypot(dx, dy);
+  }
+
+  pickupInRange(player, pickup, hint = false) {
+    if (!player || player.health <= 0 || pickup.taken) return false;
+    const dx = Math.abs(pickup.x - player.x);
+    const dy = Math.abs(pickup.y - player.y);
+    const radius = this.pickupRadius(player, pickup, hint);
+    const circular = this.pickupDistance(player, pickup) <= radius;
+    const expandedRect = dx <= radius * 0.92 && dy <= radius * 0.68;
+    return circular || expandedRect;
   }
 
   awardScrap(amount, source = "score") {

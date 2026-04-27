@@ -53,6 +53,7 @@ document.addEventListener("fullscreenchange", updateFullscreenLabel);
 function bindTouchControls() {
   if (!touchControls || !game.input?.setVirtualButton) return;
   const activeAxes = new Map();
+  const activeTouchButtons = new Map();
   const refreshAxis = () => {
     let x = 0;
     let y = 0;
@@ -68,15 +69,26 @@ function bindTouchControls() {
     game.input.setVirtualAxis("p1", x, y);
   };
 
+  const pressButton = (button, pointerId) => {
+    const action = button.dataset.touchAction;
+    const axis = button.dataset.touchAxis;
+    const player = button.dataset.touchPlayer || "p1";
+    if (action) game.input.setVirtualButton(player, action, true);
+    if (axis) {
+      const [x, y] = axis.split(",").map(Number);
+      activeAxes.set(pointerId, { x, y });
+      refreshAxis();
+    }
+    button.classList.add("pressed");
+  };
+
   const clearButton = (button, pointerId) => {
     const action = button.dataset.touchAction;
     const axis = button.dataset.touchAxis;
     const player = button.dataset.touchPlayer || "p1";
     if (action) game.input.setVirtualButton(player, action, false);
-    if (axis) {
-      activeAxes.delete(pointerId);
-      refreshAxis();
-    }
+    if (axis) activeAxes.delete(pointerId);
+    refreshAxis();
     button.classList.remove("pressed");
   };
 
@@ -84,24 +96,45 @@ function bindTouchControls() {
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       button.setPointerCapture(event.pointerId);
-      const action = button.dataset.touchAction;
-      const axis = button.dataset.touchAxis;
-      const player = button.dataset.touchPlayer || "p1";
-      if (action) game.input.setVirtualButton(player, action, true);
-      if (axis) {
-        const [x, y] = axis.split(",").map(Number);
-        activeAxes.set(event.pointerId, { x, y });
-        refreshAxis();
-      }
-      button.classList.add("pressed");
+      pressButton(button, event.pointerId);
     });
     button.addEventListener("pointerup", (event) => clearButton(button, event.pointerId));
     button.addEventListener("pointercancel", (event) => clearButton(button, event.pointerId));
     button.addEventListener("lostpointercapture", (event) => clearButton(button, event.pointerId));
+    button.addEventListener("touchstart", (event) => {
+      event.preventDefault();
+      if (window.PointerEvent) return;
+      for (const touch of event.changedTouches) {
+        activeTouchButtons.set(touch.identifier, button);
+        pressButton(button, touch.identifier);
+      }
+    }, { passive: false });
+    button.addEventListener("touchend", (event) => {
+      event.preventDefault();
+      if (window.PointerEvent) return;
+      for (const touch of event.changedTouches) {
+        const activeButton = activeTouchButtons.get(touch.identifier) || button;
+        clearButton(activeButton, touch.identifier);
+        activeTouchButtons.delete(touch.identifier);
+      }
+    }, { passive: false });
+    button.addEventListener("touchcancel", (event) => {
+      event.preventDefault();
+      if (window.PointerEvent) return;
+      for (const touch of event.changedTouches) {
+        const activeButton = activeTouchButtons.get(touch.identifier) || button;
+        clearButton(activeButton, touch.identifier);
+        activeTouchButtons.delete(touch.identifier);
+      }
+    }, { passive: false });
   });
 }
 
 bindTouchControls();
+
+document.addEventListener("touchmove", (event) => {
+  if (game.mode === "play") event.preventDefault();
+}, { passive: false });
 
 window.neonFists = game;
 window.neonFistsRelease = releaseServices;

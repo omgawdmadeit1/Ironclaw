@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Fixed pickup and weapon collection reliability with a wider pseudo-3D interaction overlap.
+- Added pickup in-range visual hints.
+- Added dropped-weapon pickup cooldown to prevent instant accidental re-grabs.
+- Improved mobile touch controls with larger scalable buttons, bigger hit areas, touch fallback events, and saved size options.
+- Added mobile control size options: Small, Medium, Large, Extra Large.
+
 ## 2026.04.26-release.1
 
 - Added public static release packaging under `dist/`.

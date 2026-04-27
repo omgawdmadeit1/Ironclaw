@@ -23,7 +23,8 @@ const DEFAULT_SAVE = {
     sfxVolume: 1,
     muted: false,
     difficulty: "normal",
-    controlDisplay: "auto"
+    controlDisplay: "auto",
+    mobileControlSize: "large"
   },
   scrap: 0,
   unlockedStages: 1,

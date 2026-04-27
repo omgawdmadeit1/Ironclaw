@@ -78,6 +78,7 @@ export class UI {
       this.game.audio.muted,
       this.game.difficulty,
       save?.options?.controlDisplay,
+      save?.options?.mobileControlSize,
       save?.scrap,
       save?.unlockedStages,
       Object.entries(save?.unlocks || {}).map(([id, value]) => `${id}-${value}`).join("|"),
@@ -431,6 +432,15 @@ export class UI {
         <div class="difficulty-row">
           <strong>Controls</strong>
           ${["auto", "keyboard", "gamepad"].map((id) => `<button class="${options.controlDisplay === id ? "selected" : ""}" data-action="control:${id}">${id.toUpperCase()}</button>`).join("")}
+        </div>
+        <div class="difficulty-row">
+          <strong>Touch Size</strong>
+          ${[
+            ["small", "Small"],
+            ["medium", "Medium"],
+            ["large", "Large"],
+            ["xl", "Extra Large"]
+          ].map(([id, label]) => `<button class="${(options.mobileControlSize || "large") === id ? "selected" : ""}" data-action="touchSize:${id}">${label}</button>`).join("")}
         </div>
         <div class="release-status">
           <p><strong>Analytics</strong> Privacy-friendly placeholder is disabled by default.</p>

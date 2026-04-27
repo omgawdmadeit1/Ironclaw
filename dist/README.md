@@ -31,6 +31,7 @@ Release additions include:
 
 - responsive mobile layout using safe-area-aware CSS
 - touch controls for movement, attacks, dash, block, special, pickup/revive, and pause
+- saved mobile touch size options: Small, Medium, Large, and Extra Large, with Large as the default
 - loading screen with status text and progress bar
 - fullscreen toggle button
 - reset-save button with browser confirmation
@@ -141,6 +142,7 @@ These adapters expose safe no-op methods for initialization, gameplay start/stop
 - Difficulty settings: Easy, Normal, Hard. Difficulty persists and affects enemy health, damage, speed, boss health, and Scrap/score tuning.
 - Combo routes: punch-punch-punch SMASH, punch-punch-kick LAUNCH KICK, dash+punch STREET RUSH, jump+kick SKY DROP, special after a strong combo or power boost for fighter-specific supers.
 - Temporary weapons: steel pipe, energy baton, street sign, shock gauntlet, heavy wrench. Punch uses light weapon attack, kick uses heavy weapon attack, special uses enhanced weapon move when powered.
+- Pickups use generous pseudo-3D overlap so floating item art matches collection feel. Normal pickups auto-collect, weapons use pickup/interact when swapping, and dropped weapons have a short owner cooldown to prevent accidental instant re-grab.
 - Reactions include stun, hurt, knockdown, launch, wall bounce, ground bounce, shocked frames, slammed poses, boss stagger, hitstop, camera shake, sparks, trails, and dust.
 
 ## Visual And Audio System
