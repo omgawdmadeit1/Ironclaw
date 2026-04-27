@@ -95,11 +95,17 @@ function bindTouchControls() {
   touchControls.querySelectorAll("button").forEach((button) => {
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
-      button.setPointerCapture(event.pointerId);
+      button.setPointerCapture?.(event.pointerId);
       pressButton(button, event.pointerId);
     });
-    button.addEventListener("pointerup", (event) => clearButton(button, event.pointerId));
-    button.addEventListener("pointercancel", (event) => clearButton(button, event.pointerId));
+    button.addEventListener("pointerup", (event) => {
+      event.preventDefault();
+      clearButton(button, event.pointerId);
+    });
+    button.addEventListener("pointercancel", (event) => {
+      event.preventDefault();
+      clearButton(button, event.pointerId);
+    });
     button.addEventListener("lostpointercapture", (event) => clearButton(button, event.pointerId));
     button.addEventListener("touchstart", (event) => {
       event.preventDefault();
@@ -128,6 +134,8 @@ function bindTouchControls() {
       }
     }, { passive: false });
   });
+  touchControls.addEventListener("contextmenu", (event) => event.preventDefault());
+  touchControls.addEventListener("dblclick", (event) => event.preventDefault());
 }
 
 bindTouchControls();
@@ -135,6 +143,8 @@ bindTouchControls();
 document.addEventListener("touchmove", (event) => {
   if (game.mode === "play") event.preventDefault();
 }, { passive: false });
+
+document.addEventListener("gesturestart", (event) => event.preventDefault(), { passive: false });
 
 window.neonFists = game;
 window.neonFistsRelease = releaseServices;

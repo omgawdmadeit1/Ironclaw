@@ -24,7 +24,9 @@ const DEFAULT_SAVE = {
     muted: false,
     difficulty: "normal",
     controlDisplay: "auto",
-    mobileControlSize: "large"
+    mobileControlSize: "large",
+    mobileControlOpacity: 0.7,
+    mobileControlLayout: "arcade"
   },
   scrap: 0,
   unlockedStages: 1,

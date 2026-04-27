@@ -7,6 +7,7 @@
 - Added dropped-weapon pickup cooldown to prevent instant accidental re-grabs.
 - Improved mobile touch controls with larger scalable buttons, bigger hit areas, touch fallback events, and saved size options.
 - Added mobile control size options: Small, Medium, Large, Extra Large.
+- Redesigned mobile controls into an arcade layout with a left D-pad, right diamond action cluster, utility buttons, top-right pause, saved layout options, and opacity control.
 
 ## 2026.04.26-release.1
 

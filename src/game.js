@@ -1437,7 +1437,7 @@ export class Game {
     this.audio.setMusicVolume(this.progression.save.options.musicVolume ?? this.audio.musicVolume);
     this.audio.setSfxVolume(this.progression.save.options.sfxVolume ?? this.audio.sfxVolume);
     this.audio.muted = Boolean(this.progression.save.options.muted);
-    this.applyMobileControlSize(this.progression.save.options.mobileControlSize || "large", false);
+    this.applyMobileControlSettings(this.progression.save.options, false);
   }
 
   start() {
@@ -1480,6 +1480,8 @@ export class Game {
     if (action.startsWith("difficulty:")) this.setDifficulty(action.split(":")[1]);
     if (action.startsWith("control:")) this.setControlPreference(action.split(":")[1]);
     if (action.startsWith("touchSize:")) this.setMobileControlSize(action.split(":")[1]);
+    if (action.startsWith("touchLayout:")) this.setMobileControlLayout(action.split(":")[1]);
+    if (action.startsWith("touchOpacity:")) this.setMobileControlOpacity(Number(action.split(":")[1]));
     if (action.startsWith("unlock:")) this.buyUnlock(action.split(":")[1]);
     if (action === "resetSave") this.resetSaveWithConfirmation();
     if (action === "resume") this.mode = "play";
@@ -1656,14 +1658,32 @@ export class Game {
   }
 
   setMobileControlSize(value) {
-    this.applyMobileControlSize(value, true);
+    this.applyMobileControlSettings({ mobileControlSize: value }, true);
   }
 
-  applyMobileControlSize(value, persist = true) {
-    const allowed = new Set(["small", "medium", "large", "xl"]);
-    const size = allowed.has(value) ? value : "large";
-    globalThis.document?.documentElement?.setAttribute("data-touch-size", size);
-    if (persist) this.progression.setOption("mobileControlSize", size);
+  setMobileControlLayout(value) {
+    this.applyMobileControlSettings({ mobileControlLayout: value }, true);
+  }
+
+  setMobileControlOpacity(value) {
+    this.applyMobileControlSettings({ mobileControlOpacity: value }, true);
+  }
+
+  applyMobileControlSettings(options = {}, persist = true) {
+    const root = globalThis.document?.documentElement;
+    const allowedSizes = new Set(["small", "medium", "large", "xl"]);
+    const allowedLayouts = new Set(["classic", "compact", "arcade"]);
+    const current = this.progression.save.options;
+    const size = allowedSizes.has(options.mobileControlSize) ? options.mobileControlSize : current.mobileControlSize || "large";
+    const layout = allowedLayouts.has(options.mobileControlLayout) ? options.mobileControlLayout : current.mobileControlLayout || "arcade";
+    const opacity = Number.isFinite(options.mobileControlOpacity) ? Math.max(0.45, Math.min(1, options.mobileControlOpacity)) : current.mobileControlOpacity ?? 0.7;
+    root?.setAttribute("data-touch-size", size);
+    root?.setAttribute("data-touch-layout", layout);
+    root?.style.setProperty("--touch-opacity", opacity.toFixed(2));
+    if (!persist) return;
+    this.progression.setOption("mobileControlSize", size);
+    this.progression.setOption("mobileControlLayout", layout);
+    this.progression.setOption("mobileControlOpacity", opacity);
   }
 
   resetSaveWithConfirmation() {
@@ -1674,7 +1694,7 @@ export class Game {
     this.audio.setMusicVolume(this.progression.save.options.musicVolume ?? 1);
     this.audio.setSfxVolume(this.progression.save.options.sfxVolume ?? 1);
     this.audio.muted = Boolean(this.progression.save.options.muted);
-    this.applyMobileControlSize(this.progression.save.options.mobileControlSize || "large", false);
+    this.applyMobileControlSettings(this.progression.save.options, false);
     this.pendingStageIndex = 0;
     this.playerCount = 2;
     this.mode = "start";

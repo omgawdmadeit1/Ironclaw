@@ -79,6 +79,8 @@ export class UI {
       this.game.difficulty,
       save?.options?.controlDisplay,
       save?.options?.mobileControlSize,
+      save?.options?.mobileControlLayout,
+      save?.options?.mobileControlOpacity,
       save?.scrap,
       save?.unlockedStages,
       Object.entries(save?.unlocks || {}).map(([id, value]) => `${id}-${value}`).join("|"),
@@ -335,6 +337,7 @@ export class UI {
           ${this.infoCard("Player 1", ["Move: WASD", "Punch/Kick/Jump: J / K / L", "Block/Special: I / U", "Dash: Shift", "Pick up, drop, revive: E"])}
           ${this.infoCard("Player 2", ["Move: Arrow keys", "Punch/Kick/Jump: Numpad 1 / 2 / 3", "Block/Special: Numpad 4 / 5", "Dash: Numpad 0", "Pick up, drop, revive: Numpad 6 or +"])}
           ${this.infoCard("Fallback", ["Top-row 1/2/3/4/5 work for P2 actions", "0 dashes", "6 or = picks up, drops, or revives", "Enter or Escape pauses"])}
+          ${this.infoCard("Mobile Touch", ["Left D-pad moves", "Right diamond: Jump / Punch / Kick / Super", "Utility buttons: Dash / Block / Pickup", "Top-right touch button pauses"])}
         </div>`;
     }
     if (page === "items") {
@@ -420,6 +423,9 @@ export class UI {
 
   optionsContent() {
     const options = this.game.progression.save.options;
+    const touchSize = options.mobileControlSize || "large";
+    const touchLayout = options.mobileControlLayout || "arcade";
+    const touchOpacity = Math.round((options.mobileControlOpacity ?? 0.7) * 100);
     return `
       <div class="audio-menu">
         <div class="difficulty-row">
@@ -440,8 +446,21 @@ export class UI {
             ["medium", "Medium"],
             ["large", "Large"],
             ["xl", "Extra Large"]
-          ].map(([id, label]) => `<button class="${(options.mobileControlSize || "large") === id ? "selected" : ""}" data-action="touchSize:${id}">${label}</button>`).join("")}
+          ].map(([id, label]) => `<button class="${touchSize === id ? "selected" : ""}" data-action="touchSize:${id}">${label}</button>`).join("")}
         </div>
+        <div class="difficulty-row">
+          <strong>Touch Layout</strong>
+          ${[
+            ["classic", "Classic"],
+            ["compact", "Compact"],
+            ["arcade", "Arcade"]
+          ].map(([id, label]) => `<button class="${touchLayout === id ? "selected" : ""}" data-action="touchLayout:${id}">${label}</button>`).join("")}
+        </div>
+        <label class="touch-opacity-row">
+          <strong>Touch Opacity</strong>
+          <input type="range" min="45" max="100" step="5" value="${touchOpacity}" data-touch-opacity />
+          <span data-touch-opacity-value>${touchOpacity}%</span>
+        </label>
         <div class="release-status">
           <p><strong>Analytics</strong> Privacy-friendly placeholder is disabled by default.</p>
           <p><strong>Platform SDKs</strong> CrazyGames, Poki, itch.io, and GameDistribution adapters are placeholders only.</p>
@@ -504,6 +523,15 @@ export class UI {
           return;
         }
         this.game.menuAction(button.dataset.action);
+      });
+    });
+    this.overlay.querySelectorAll("input[data-touch-opacity]").forEach((input) => {
+      input.addEventListener("input", () => {
+        const pct = Number(input.value);
+        if (!Number.isFinite(pct)) return;
+        this.game.setMobileControlOpacity(pct / 100);
+        const output = input.closest(".touch-opacity-row")?.querySelector("[data-touch-opacity-value]");
+        if (output) output.textContent = `${pct}%`;
       });
     });
   }

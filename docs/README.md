@@ -30,8 +30,8 @@ The current build version is `2026.04.26-release.1`. The HTML entry point uses c
 Release additions include:
 
 - responsive mobile layout using safe-area-aware CSS
-- touch controls for movement, attacks, dash, block, special, pickup/revive, and pause
-- saved mobile touch size options: Small, Medium, Large, and Extra Large, with Large as the default
+- professional mobile arcade controls: left D-pad, right diamond action cluster, utility buttons, and top-right pause
+- saved mobile touch options: size, layout, and opacity, with Large / Arcade / 70% opacity as the default
 - loading screen with status text and progress bar
 - fullscreen toggle button
 - reset-save button with browser confirmation
@@ -48,6 +48,7 @@ Release additions include:
 - Start/Pause: Enter or Escape
 - Debug overlay: F3
 - Gamepad: pad 1 controls P1, pad 2 controls P2 where supported
+- Mobile touch: left D-pad moves, right diamond uses Jump / Punch / Kick / Super, utility buttons handle Dash / Block / Pickup, and the top-right touch button pauses. Touch options include Small, Medium, Large, Extra Large, Classic, Compact, Arcade, and opacity.
 
 ## Modes And Menus
 
@@ -57,7 +58,7 @@ Release additions include:
 - Endless Mode: placeholder screen for future seeded survival waves.
 - Upgrades: Scrap unlock shop for optional local rewards.
 - Encyclopedia: enemy behavior, weakness, variants, and first-seen stage.
-- Options: persistent music volume, SFX volume, mute, difficulty, and control display preference.
+- Options: persistent music volume, SFX volume, mute, difficulty, control display preference, mobile touch size, mobile touch layout, and mobile touch opacity.
 - Stats: total Scrap, enemies defeated, best score, best combo, and clears by stage.
 - Credits: local/original asset and build notes.
 
@@ -205,7 +206,7 @@ Before publishing a web build:
 
 1. Run `cmd /c "for %f in (src\*.js) do @node --check %f"`.
 2. Rebuild or refresh `dist/` so it contains only release files.
-3. Serve `dist/` locally and verify the title screen, Story Mode, 1P, 2P, pause menu, options, touch controls, fullscreen, and reset-save confirmation.
+3. Serve `dist/` locally and verify the title screen, Story Mode, 1P, 2P, pause menu, options, mobile touch controls in portrait and landscape, fullscreen, and reset-save confirmation.
 4. Confirm browser console errors are `0`.
 5. Confirm analytics and platform SDK adapters are disabled unless the target platform integration is intentionally enabled.
 6. Upload the contents of `dist/` to the static host or platform portal.

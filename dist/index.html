@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#05070d" />
     <meta
       name="description"
@@ -26,22 +26,30 @@
         </div>
       </section>
       <button id="fullscreen-button" class="fullscreen-button" type="button" aria-label="Toggle fullscreen">Fullscreen</button>
-      <section id="touch-controls" class="touch-controls" aria-label="Touch controls">
-        <div class="touch-pad" aria-label="Movement pad">
-          <button data-touch-player="p1" data-touch-axis="-1,0" aria-label="Move left">L</button>
-          <button data-touch-player="p1" data-touch-axis="0,-1" aria-label="Move up">U</button>
-          <button data-touch-player="p1" data-touch-axis="0,1" aria-label="Move down">D</button>
-          <button data-touch-player="p1" data-touch-axis="1,0" aria-label="Move right">R</button>
+      <section id="touch-controls" class="touch-controls touch-layout-arcade" aria-label="Touch controls">
+        <button class="touch-pause" data-touch-player="system" data-touch-action="pause" aria-label="Pause game">
+          <span class="touch-icon">II</span>
+          <span>PAUSE</span>
+        </button>
+        <div class="touch-dpad" aria-label="Movement D-pad">
+          <button class="dpad-button dpad-left" data-touch-player="p1" data-touch-axis="-1,0" aria-label="Move left"><span class="touch-icon">◀</span></button>
+          <button class="dpad-button dpad-up" data-touch-player="p1" data-touch-axis="0,-1" aria-label="Move up"><span class="touch-icon">▲</span></button>
+          <button class="dpad-button dpad-down" data-touch-player="p1" data-touch-axis="0,1" aria-label="Move down"><span class="touch-icon">▼</span></button>
+          <button class="dpad-button dpad-right" data-touch-player="p1" data-touch-axis="1,0" aria-label="Move right"><span class="touch-icon">▶</span></button>
+          <span class="dpad-core" aria-hidden="true"></span>
         </div>
         <div class="touch-actions" aria-label="Action buttons">
-          <button data-touch-player="p1" data-touch-action="punch">Punch</button>
-          <button data-touch-player="p1" data-touch-action="kick">Kick</button>
-          <button data-touch-player="p1" data-touch-action="jump">Jump</button>
-          <button data-touch-player="p1" data-touch-action="block">Block</button>
-          <button data-touch-player="p1" data-touch-action="special">Special</button>
-          <button data-touch-player="p1" data-touch-action="dash">Dash</button>
-          <button data-touch-player="p1" data-touch-action="pickup">Use</button>
-          <button data-touch-player="system" data-touch-action="pause">Pause</button>
+          <div class="action-cluster" aria-label="Primary attacks">
+            <button class="touch-button action-jump" data-touch-player="p1" data-touch-action="jump" aria-label="Jump"><span class="touch-icon">▲</span><span>JUMP</span></button>
+            <button class="touch-button action-punch" data-touch-player="p1" data-touch-action="punch" aria-label="Punch"><span class="touch-icon">✊</span><span>PUNCH</span></button>
+            <button class="touch-button action-kick" data-touch-player="p1" data-touch-action="kick" aria-label="Kick"><span class="touch-icon">▰</span><span>KICK</span></button>
+            <button class="touch-button action-special" data-touch-player="p1" data-touch-action="special" aria-label="Super"><span class="touch-icon">⚡</span><span>SUPER</span></button>
+          </div>
+          <div class="utility-cluster" aria-label="Utility actions">
+            <button class="touch-button utility-dash" data-touch-player="p1" data-touch-action="dash" aria-label="Dash"><span class="touch-icon">»</span><span>DASH</span></button>
+            <button class="touch-button utility-block" data-touch-player="p1" data-touch-action="block" aria-label="Block"><span class="touch-icon">⬟</span><span>BLOCK</span></button>
+            <button class="touch-button utility-pickup" data-touch-player="p1" data-touch-action="pickup" aria-label="Pickup"><span class="touch-icon">✋</span><span>PICKUP</span></button>
+          </div>
         </div>
       </section>
     </main>
